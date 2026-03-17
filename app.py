@@ -6,6 +6,7 @@ import base64
 import re
 from datetime import datetime
 import pandas as pd
+import altair as alt
 
 # ==========================================
 # 网页整体设置
@@ -154,15 +155,29 @@ with tab1:
             yahoo_data = json.loads(urllib.request.urlopen(req_yahoo).read())
             
             # 解析数据并用 Pandas 整理成表格
+           # ... 前面抓取数据的代码保持不变 ...
             timestamps = yahoo_data['chart']['result'][0]['timestamp']
             closes = yahoo_data['chart']['result'][0]['indicators']['quote'][0]['close']
             
             dates = [datetime.fromtimestamp(ts) for ts in timestamps]
-            df = pd.DataFrame({'SGD to MYR': closes}, index=dates)
+            # 这里稍微改一下，把时间作为一列，方便高级画图
+            df = pd.DataFrame({'Date': dates, 'Rate': closes})
             df = df.dropna() # 剔除空数据
             
-            # 用 Streamlit 自带的折线图一键渲染！
-            st.line_chart(df, use_container_width=True, color="#2ECC71")
+            # 🔥 极其专业的高级画图魔法：强制关闭 Y 轴从 0 开始 (zero=False)
+            chart = alt.Chart(df).mark_line(color="#2ECC71").encode(
+                x=alt.X('Date:T', title='时间 / Date'),
+                y=alt.Y('Rate:Q', title='汇率 / Rate', scale=alt.Scale(zero=False)),
+                # 加上高级的鼠标悬停提示框！
+                tooltip=[
+                    alt.Tooltip('Date:T', title='时间', format='%Y-%m-%d %H:%M'), 
+                    alt.Tooltip('Rate:Q', title='汇率', format='.4f')
+                ]
+            ).interactive() # 允许用户用鼠标拖拽和滚轮缩放！
+            
+            # 渲染图表
+            st.altair_chart(chart, use_container_width=True)
+            
         except Exception as e:
             st.warning("⚠️ 暂时无法获取历史走势图，请稍后再试。")
 
