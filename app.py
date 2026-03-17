@@ -17,7 +17,7 @@ if 'lang' not in st.session_state:
     st.session_state.lang = "中文"
 
 # ==========================================
-# 🌐 语言字典 (新增了免责声明和反馈窗口文案)
+# 🌐 语言字典
 # ==========================================
 TEXT = {
     "title": {"中文": "🚀 新马汇率哪家好？", "English": "🚀 Best SG/MY Exchange Rates"},
@@ -80,7 +80,7 @@ st.title(t("title"))
 tab1, tab2 = st.tabs([t("tab1"), t("tab2")])
 
 # ==========================================
-# 标签页 1：不需要现金 (线上 App - 完整展示版)
+# 标签页 1：不需要现金 (线上 App - 完美剔除 Revolut)
 # ==========================================
 with tab1:
     st.subheader(t("t1_sub"))
@@ -94,21 +94,18 @@ with tab1:
                 base_rate = json.loads(urllib.request.urlopen(req).read())['rates']['MYR']
                 st.success(t("t1_success").format(base_rate=base_rate))
                 
-                # 🔥 极其重要的免责声明
                 st.caption(t("t1_disclaimer"))
                 
-                # 核心精算引擎 (加入所有平台)
+                # 核心精算引擎 (彻底移除了 Revolut)
                 wise_myr = (amount - (0.50 + amount * 0.0045)) * base_rate
                 youtrip_myr = amount * (base_rate * (1 - 0.0015))
                 panda_myr = ((amount - 4.0) * (base_rate * (1 - 0.002))) if amount > 4 else 0
                 cimb_maybank_myr = amount * (base_rate * (1 - 0.01))
                 dbs_uob_myr = amount * (base_rate * (1 - 0.015))
-                revolut_myr = amount * base_rate # 假设平日免手续费
                 
                 # 打包结果并排序
                 results = {
                     "YouTrip 🟪": youtrip_myr,
-                    "Revolut ⬛ (平日)": revolut_myr,
                     "Wise 🟦": wise_myr,
                     "PandaRemit 🐼": panda_myr,
                     "CIMB / Maybank 🔴🟡": cimb_maybank_myr,
@@ -116,7 +113,7 @@ with tab1:
                 }
                 sorted_results = sorted(results.items(), key=lambda x: x[1], reverse=True)
                 
-                # 依然炫酷展示前三名作为视觉焦点
+                # 炫酷展示前三名作为视觉焦点
                 c1, c2, c3 = st.columns(3)
                 c1.metric(f"🥇 {sorted_results[0][0]}", f"{sorted_results[0][1]:.2f} MYR")
                 c2.metric(f"🥈 {sorted_results[1][0]}", f"{sorted_results[1][1]:.2f} MYR")
@@ -124,10 +121,9 @@ with tab1:
                 
                 st.markdown("---")
                 
-                # 🔥 完整列表展示：让用户自己做决定！
+                # 完整列表展示
                 st.subheader(t("t1_full_list"))
                 for i, (name, val) in enumerate(sorted_results, start=1):
-                    # 如果算出来是 0（比如熊猫速汇扣掉手续费不够了），就显示不适用
                     display_val = f"{val:.2f} MYR" if val > 0 else "N/A (金额太小)"
                     st.write(f"第 {i} 名: **{name}** 👉 预计到手: **{display_val}**")
                     
@@ -166,7 +162,6 @@ with tab2:
             return custom_store if custom_store else None
         return selected
 
-    # 路线 A：手动流 
     if upload_method == t("t2_m1"):
         final_rate_manual = st.number_input(t("manual_input"), value=3.4500, step=0.0010, format="%.4f")
         confirmed_store_manual = select_and_verify_store()
@@ -177,7 +172,6 @@ with tab2:
                 st.session_state.community_feed.append({"store": confirmed_store_manual, "rate": final_rate_manual, "time": now_time})
                 st.rerun()
 
-    # 路线 B：拍照流 
     else:
         uploaded_file = st.file_uploader(t("photo_up"), type=["jpg", "jpeg", "png"])
         ai_predicted_rate = 3.4500 
@@ -211,13 +205,12 @@ with tab2:
                     st.rerun()
 
 # ==========================================
-# 💡 全局意见反馈窗口 (放到底部)
+# 💡 全局意见反馈窗口
 # ==========================================
 st.markdown("---")
 st.subheader(t("fb_title"))
 feedback_text = st.text_area(t("fb_prompt"), placeholder="例如：能不能加入汇率走势图？...")
 if st.button(t("fb_btn")):
     if feedback_text:
-        # 在真实开发中，这里会把数据写进数据库或者发到你的邮箱
         st.success(t("fb_thanks"))
         st.balloons()
